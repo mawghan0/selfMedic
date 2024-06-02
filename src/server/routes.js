@@ -4,7 +4,8 @@ const {
   postUserHandler,
   postRegisterHandler,
   getAllDiseases,
-  scarDetection,
+  postSugarBlood,
+  getAllSugarBlood
 } = require('./handler');
 
 const routes = [
@@ -12,6 +13,7 @@ const routes = [
       path: '/login',
       method: 'POST',
       options: {
+        auth: false,
         validate: {
           payload: Joi.object({
             email: Joi.string().required(),
@@ -24,19 +26,15 @@ const routes = [
     {
         path: '/register',
         method: 'POST',
-        // options: {
-        //   validate: {
-        // //     payload: Joi.object({
-        // //       email: Joi.string().required(),  
-        // //       password: Joi.string().required()
-        // //     }),
-        //     failAction: (request, h, error) => {
-        //       // Log the validation error for debugging
-        //         console.error('Validation Error:', error.details[0].message);
-        //         return h.response({ error: error.details[0].message }).code(400).takeover();
-        //   }
-        //   }
-        // },
+        options: {
+          auth: false,
+          validate: {
+            payload: Joi.object({
+              email: Joi.string().required(),  
+              password: Joi.string().required()
+            }),
+          }
+        },
         handler: postRegisterHandler,
     },
     {
@@ -44,17 +42,22 @@ const routes = [
       method: 'GET',
       handler: getAllDiseases,
     },
-    // {
-    //   path: '/scar',
-    //   method: 'POST',
-    //   handler: scarDetection,
-    //   options: {
-    //     payload: {
-    //       allow: 'multipart/form-data',
-    //       multipart: true,
-    //     }
-    //   }
-    // }
+    {
+      path: '/sugar-blood',
+      method: 'POST',
+      options: {
+        auth: 'jwt',
+      },
+      handler: postSugarBlood,
+    },
+    {
+      path: '/sugar-blood',
+      method: 'GET',
+      options: {
+        auth: 'jwt',
+      },
+      handler: getAllSugarBlood,
+    }
 ]
 
 module.exports = routes;
