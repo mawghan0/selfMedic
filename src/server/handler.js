@@ -19,7 +19,7 @@ async function postUserHandler(request, h) {
         return h.response({ error: 'Invalid password', hash: user.password, password: password }).code(401);
     }
 
-    const token = jwt.sign({ user_id: user.user_id, email: user.email }, 'your_jwt_secret', { expiresIn: '1h' });
+    const token = jwt.sign({ user_id: user.user_id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
     return h.response({ message: 'Login successful', token }).code(200);
     } catch (error) {
@@ -115,10 +115,27 @@ async function getAllSugarBlood(request, h){
     });
 }
 
+async function getProfile(request, h){
+    const users = request.auth.credentials.user;
+    const [user] = await pool.execute('SELECT * FROM users WHERE user_id = ?', [users.user_id]);
+    const userProfile = user[0];
+        const emailFullName = {
+            name: userProfile.full_name,
+            email: userProfile.email
+        };
+
+    return h.response({
+        status: "Success",
+        data: emailFullName
+        // user: user,
+    });
+}
+
 module.exports = {
     postUserHandler,
     postRegisterHandler,
     getAllDiseases,
     postSugarBlood,
-    getAllSugarBlood
+    getAllSugarBlood,
+    getProfile
 }
