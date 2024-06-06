@@ -84,9 +84,7 @@ async function getAllDiseases(request, h){
 
     return h.response({
         status: "Success",
-        data: {
-            diseases: simplifiedDiseases,
-        }
+        data: simplifiedDiseases
     });
 }
 
@@ -151,9 +149,7 @@ async function getAllSugarBlood(request, h){
 
     return h.response({
         status: "Success",
-        data: {
-            note: simplifiedSugarBlood,
-        }
+        data: simplifiedSugarBlood
         // user: user,
     });
 }
