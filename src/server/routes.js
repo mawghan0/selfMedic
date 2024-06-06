@@ -6,7 +6,9 @@ const {
   getAllDiseases,
   postSugarBlood,
   getAllSugarBlood,
-  getProfile
+  getProfile,
+  postBloodPressure,
+  getAllBloodPressure
 } = require("./handler");
 
 const routes = [
@@ -60,6 +62,22 @@ const routes = [
       auth: "jwt",
     },
     handler: getProfile,
+  },
+  {
+    path: "/blood-pressure",
+    method: "POST",
+    options: {
+      auth: "jwt",
+    },
+    handler: postBloodPressure,
+  },
+  {
+    path: "/blood-pressure",
+    method: "GET",
+    options: {
+      auth: "jwt",
+    },
+    handler: getAllBloodPressure,
   },
 ];
 

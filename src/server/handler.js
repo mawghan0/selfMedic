@@ -131,11 +131,45 @@ async function getProfile(request, h){
     });
 }
 
+async function postBloodPressure(request, h){
+    const {check_date, check_time, sistolik, distolik} = request.payload;
+
+    const id = "BP" + crypto.randomUUID();
+    const user = request.auth.credentials.user;
+
+    await pool.execute(
+        'INSERT INTO tekanandarah (id, user_id, check_date, check_time, sistolik, distolik) VALUES (?, ?, ?, ?, ?, ?)', 
+        [id, user.user_id, check_date, check_time, sistolik, distolik]
+    );
+
+    return h.response({ message: 'success', user }).code(200);
+}
+
+async function getAllBloodPressure(request, h){
+    const user = request.auth.credentials.user;
+    const [tekanandarah] = await pool.execute('SELECT * FROM tekanandarah WHERE user_id = ?', [user.user_id]);
+    const bloodPressure = tekanandarah.map(note => ({
+        // check_date: note.check_date.toISOString().split('T')[0],
+        check_date: addHours(note.check_date, 7).toISOString().split('T')[0],
+        check_time: note.check_time,
+        sistolik: note.sistolik,
+        distolik: note.distolik,
+      }));
+
+    return h.response({
+        status: "Success",
+        data: bloodPressure,
+        // user: user,
+    });
+}
+
 module.exports = {
     postUserHandler,
     postRegisterHandler,
     getAllDiseases,
     postSugarBlood,
     getAllSugarBlood,
-    getProfile
+    getProfile,
+    postBloodPressure,
+    getAllBloodPressure
 }
