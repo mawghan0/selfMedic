@@ -1,8 +1,23 @@
 // const { nanoid } = import('nanoid');
 const crypto = require("crypto");
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const pool = require('../server/db')
+const pool = require('../server/db');
+// const { image } = require("@tensorflow/tfjs-node");
+const scarClassification = require('../services/inferenceService')
+const loadModel = require("../services/loadModel");
+
+const skinDiseases = {
+    'BA-cellulitis': 0, 
+    'BA-impetigo': 1, 
+    'FU-athlete-foot': 2, 
+    'FU-nail-fungus': 3, 
+    'FU-ringworm': 4, 
+    'Luka': 5, 
+    'PA-cutaneous-larva-migrans': 6, 
+    'VI-chickenpox': 7, 
+    'VI-shingles': 8
+}
 
 async function postUserHandler(request, h) {
     try {const { email, password } = request.payload;
@@ -19,7 +34,7 @@ async function postUserHandler(request, h) {
         return h.response({ error: 'Invalid password', hash: user.password, password: password }).code(401);
     }
 
-    const token = jwt.sign({ user_id: user.user_id, email: user.email }, 'your_jwt_secret', { expiresIn: '1h' });
+    const token = jwt.sign({ user_id: user.user_id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
     return h.response({ message: 'Login successful', token }).code(200);
     } catch (error) {
@@ -57,10 +72,14 @@ async function postRegisterHandler(request, h){
     return h.response({ message: 'User registered successfully'}).code(201);
 }
 
-async function getAllDiseases(h){
-    const simplifiedDiseases = diseases.map(disease => ({
+async function getAllDiseases(request, h){
+    const [disease] = await pool.execute('SELECT * FROM diseases');
+
+    const simplifiedDiseases = disease.map(disease => ({
+        id: disease.id,
         name: disease.name,
         publisher: disease.description,
+        imageURL: disease.image
       }));
 
     return h.response({
@@ -71,12 +90,36 @@ async function getAllDiseases(h){
     });
 }
 
-// async function scarDetection(request, h){
-//     const { image } = request.payload;
-//     const { model } = await loadModel(process.env.MODEL_URL)
+async function getDiseaseDetail(request, h){
+    const id = request.params.id;
 
-//     const { label, suggestion } = await scarClassification(model, image);
-// }
+    const [rows] = await pool.execute('SELECT * FROM diseases WHERE id = ?', [id]);
+
+    if (rows.length === 0) {
+        return h.response({ error: 'Disease not found' }).code(404);
+    }
+    
+    const disease_detail = rows[0];
+
+    return h.response({
+        message: 'success',
+        data: disease_detail
+    }).code(200);
+}
+
+async function skinDetection(request, h){
+    const { image } = request.payload;
+    const { skin_model } = request.server.app;
+
+    // const { label, suggestion } = await scarClassification(model, image);
+    const result = await scarClassification(skin_model, image)
+
+    const disease = Object.keys(skinDiseases);
+    return h.response({
+        // score: score,
+        result: disease[result]
+    }).code(200);
+}
 
 async function postSugarBlood(request, h){
     const {check_date, check_time, blood_sugar} = request.payload;
@@ -115,10 +158,65 @@ async function getAllSugarBlood(request, h){
     });
 }
 
+//route profile
+async function getProfile(request, h){
+    const users = request.auth.credentials.user;
+    const [user] = await pool.execute('SELECT * FROM users WHERE user_id = ?', [users.user_id]);
+    const userProfile = user[0];
+        const emailFullName = {
+            name: userProfile.full_name,
+            email: userProfile.email
+        };
+
+    return h.response({
+        status: "Success",
+        data: emailFullName
+        // user: user,
+    });
+}
+
+//route tekanan darah
+async function postBloodPressure(request, h){
+    const {check_date, check_time, sistolik, distolik} = request.payload;
+
+    const id = "BP" + crypto.randomUUID();
+    const user = request.auth.credentials.user;
+
+    await pool.execute(
+        'INSERT INTO tekanandarah (id, user_id, check_date, check_time, sistolik, distolik) VALUES (?, ?, ?, ?, ?, ?)', 
+        [id, user.user_id, check_date, check_time, sistolik, distolik]
+    );
+
+    return h.response({ message: 'success', user }).code(200);
+}
+
+async function getAllBloodPressure(request, h){
+    const user = request.auth.credentials.user;
+    const [tekanandarah] = await pool.execute('SELECT * FROM tekanandarah WHERE user_id = ?', [user.user_id]);
+    const bloodPressure = tekanandarah.map(note => ({
+        // check_date: note.check_date.toISOString().split('T')[0],
+        check_date: addHours(note.check_date, 7).toISOString().split('T')[0],
+        check_time: note.check_time,
+        sistolik: note.sistolik,
+        distolik: note.distolik,
+      }));
+
+    return h.response({
+        status: "Success",
+        data: bloodPressure,
+        // user: user,
+    });
+}
+
 module.exports = {
     postUserHandler,
     postRegisterHandler,
     getAllDiseases,
     postSugarBlood,
-    getAllSugarBlood
+    getAllSugarBlood,
+    getDiseaseDetail,
+    skinDetection,
+    getProfile,
+    postBloodPressure,
+    getAllBloodPressure
 }
