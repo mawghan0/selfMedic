@@ -8,7 +8,8 @@ const {
   getAllSugarBlood,
   getProfile,
   postBloodPressure,
-  getAllBloodPressure
+  getAllBloodPressure,
+  skinDetection
 } = require("./handler");
 
 const routes = [
@@ -78,6 +79,18 @@ const routes = [
       auth: "jwt",
     },
     handler: getAllBloodPressure,
+  },
+  {
+    path: '/skin-detection',
+    method: 'POST',
+    options: {
+      auth: false,
+      payload: {
+        allow: 'multipart/form-data',
+        multipart: true,
+      }
+    },
+    handler: skinDetection,
   },
 ];
 

@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../server/db')
+const scarClassification = require('../services/inferenceService');
 
 async function postUserHandler(request, h) {
     try {const { email, password } = request.payload;
@@ -163,6 +164,59 @@ async function getAllBloodPressure(request, h){
     });
 }
 
+async function skinDetection(request, h){
+    const { image } = request.payload;
+    const { skinModel } = request.server.app;
+
+    // const { label, suggestion } = await scarClassification(model, image);
+    const result = await scarClassification(skinModel, image);
+
+    function getPredictedDisease(predictions) {
+        let maxProbability = 0;
+        let predictedDisease = '';
+    
+        // Loop through the prediction probabilities
+        Object.keys(predictions).forEach(key => {
+            // Check if the current probability is higher than the current maximum probability
+            if (predictions[key] > maxProbability) {
+                maxProbability = predictions[key];
+                predictedDisease = key;
+            }
+        });
+    
+        // Map the predicted disease label based on the key
+        switch (predictedDisease) {
+            case '0':
+                return 'BA-cellulitis';
+            case '1':
+                return 'BA-impetigo';
+            case '2':
+                return 'FU-athlete-foot';
+            case '3':
+                return 'FU-nail-fungus';
+            case '4':
+                return 'FU-ringworm';
+            case '5':
+                return 'PA-cutaneous-larva-migrans';
+            case '6':
+                return 'VI-chickenpox';
+            case '7':
+                return 'VI-shingles';
+            case '8':
+                return 'scar';
+            default:
+                return 'Unknown';
+        }
+    }
+    const predictedDisease = getPredictedDisease(result);
+    // const disease = Object.keys(skinDiseases);
+    return h.response({
+        // score: score,
+        result: predictedDisease,
+    }).code(200);
+}
+
+
 module.exports = {
     postUserHandler,
     postRegisterHandler,
@@ -171,5 +225,6 @@ module.exports = {
     getAllSugarBlood,
     getProfile,
     postBloodPressure,
-    getAllBloodPressure
+    getAllBloodPressure,
+    skinDetection
 }
