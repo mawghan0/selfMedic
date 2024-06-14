@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const pool = require('../server/db');
 // const { image } = require("@tensorflow/tfjs-node");
 const scarClassification = require('../services/inferenceService')
-const loadModel = require("../services/loadModel");
+// const loadModel = require("../services/loadModel");
 
 const skinDiseases = {
     'BA-cellulitis': 0, 
@@ -78,7 +78,7 @@ async function getAllDiseases(request, h){
     const simplifiedDiseases = disease.map(disease => ({
         id: disease.id,
         name: disease.name,
-        publisher: disease.description,
+        description: disease.description,
         imageURL: disease.image
       }));
 
