@@ -13,10 +13,10 @@ const skinDiseases = {
     'FU-athlete-foot': 2, 
     'FU-nail-fungus': 3, 
     'FU-ringworm': 4, 
-    'Luka': 5, 
-    'PA-cutaneous-larva-migrans': 6, 
-    'VI-chickenpox': 7, 
-    'VI-shingles': 8
+    'cutaneous-larva-migrans': 5, 
+    'VI-chickenpox': 6, 
+    'VI-shingles': 7, 
+    'Scar': 8
 }
 
 async function postUserHandler(request, h) {
