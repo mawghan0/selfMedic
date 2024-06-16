@@ -36,7 +36,11 @@ async function postUserHandler(request, h) {
 
     const token = jwt.sign({ user_id: user.user_id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    return h.response({ message: 'Login successful', token }).code(200);
+    return h.response({error: false, message: 'Login successful', loginResult: {
+        userId: user.user_id,
+        name: user.full_name,
+        token: token
+    } }).code(200);
     } catch (error) {
         console.error('Error during login:', error); // Log the detailed error
         return h.response({ error: 'Internal Server Error', details: error.message }).code(500);
@@ -51,14 +55,20 @@ async function postRegisterHandler(request, h){
     const user_id = "U" + id;
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // const newUser = {
-    //     user_id, email, full_name, hashedPassword, date_of_birth, gender, createdAt
-    // }
+    if (password.length < 8) {
+        const response = h.response({
+            error: true,
+            message: 'Password must be at least 8 characters long'
+        })
+        response.code(400);
+        return response;
+    }
     
     const [rows] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
     if (rows.length > 0) {
         const response = h.response({
-            error: 'Email already exists',
+            error: true,
+            message: 'Email is already taken'
         })
         response.code(400);
         return response;
@@ -69,7 +79,7 @@ async function postRegisterHandler(request, h){
         [user_id, email, full_name, hashedPassword, date_of_birth, gender, createdAt]
     );
     // const isValid = await bcrypt.compare(password, hashedPassword);
-    return h.response({ message: 'User registered successfully'}).code(201);
+    return h.response({ error: false, message: 'User registered successfully'}).code(201);
 }
 
 async function getAllDiseases(request, h){
@@ -83,6 +93,7 @@ async function getAllDiseases(request, h){
       }));
 
     return h.response({
+        error: false,
         status: "Success",
         data: simplifiedDiseases
     });
@@ -100,6 +111,7 @@ async function getDiseaseDetail(request, h){
     const disease_detail = rows[0];
 
     return h.response({
+        error: false,
         message: 'success',
         data: disease_detail
     }).code(200);
@@ -114,7 +126,7 @@ async function skinDetection(request, h){
 
     const disease = Object.keys(skinDiseases);
     return h.response({
-        // score: score,
+        error: false,
         result: disease[result]
     }).code(200);
 }
@@ -130,7 +142,7 @@ async function postSugarBlood(request, h){
         [id, user.user_id, check_date, check_time, blood_sugar]
     );
 
-    return h.response({ message: 'success', user }).code(200);
+    return h.response({error: false, message: 'success', user }).code(200);
 }
 
 function addHours(date, hours) {
@@ -148,6 +160,7 @@ async function getAllSugarBlood(request, h){
       }));
 
     return h.response({
+        error: false,
         status: "Success",
         data: simplifiedSugarBlood
         // user: user,
@@ -165,6 +178,7 @@ async function getProfile(request, h){
         };
 
     return h.response({
+        error: false,
         status: "Success",
         data: emailFullName
         // user: user,
@@ -183,7 +197,7 @@ async function postBloodPressure(request, h){
         [id, user.user_id, check_date, check_time, sistolik, distolik]
     );
 
-    return h.response({ message: 'success', user }).code(200);
+    return h.response({error: false, message: 'success', user }).code(201);
 }
 
 async function getAllBloodPressure(request, h){
@@ -198,6 +212,7 @@ async function getAllBloodPressure(request, h){
       }));
 
     return h.response({
+        error: false,
         status: "Success",
         data: bloodPressure,
         // user: user,
