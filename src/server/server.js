@@ -40,7 +40,7 @@ const InputError = require("../exceptions/InputError");
 
     server.auth.default('jwt');
 
-    const model = await loadModel("file://model/model.json");
+    const model = await loadModel("https://storage.googleapis.com/capstone-self-medic/model/model.json");
     server.app.skin_model = model;
 
 

@@ -54,6 +54,8 @@ async function postRegisterHandler(request, h){
     const createdAt = new Date().toISOString();
     const user_id = "U" + id;
     const hashedPassword = await bcrypt.hash(password, 10);
+    const inputDate = new Date(createdAt);
+    const formattedDate = inputDate.toISOString().slice(0, 19).replace('T', ' ');
 
     if (password.length < 8) {
         const response = h.response({
@@ -76,7 +78,7 @@ async function postRegisterHandler(request, h){
 
     await pool.execute(
         'INSERT INTO users (user_id, email, full_name, password, date_of_birth, gender, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)', 
-        [user_id, email, full_name, hashedPassword, date_of_birth, gender, createdAt]
+        [user_id, email, full_name, hashedPassword, date_of_birth, gender, formattedDate]
     );
     // const isValid = await bcrypt.compare(password, hashedPassword);
     return h.response({ error: false, message: 'User registered successfully'}).code(201);
@@ -88,6 +90,8 @@ async function getAllDiseases(request, h){
     const simplifiedDiseases = disease.map(disease => ({
         id: disease.id,
         name: disease.name,
+        prevention: disease.prevention,
+        treatment: disease.treatment,
         description: disease.description,
         imageURL: disease.image
       }));
@@ -142,7 +146,7 @@ async function postSugarBlood(request, h){
         [id, user.user_id, check_date, check_time, blood_sugar]
     );
 
-    return h.response({error: false, message: 'success', user }).code(200);
+    return h.response({error: false, message: 'success', data: {check_date: check_date, check_time: check_time, blood_sugar: blood_sugar} }).code(200);
 }
 
 function addHours(date, hours) {
@@ -197,7 +201,7 @@ async function postBloodPressure(request, h){
         [id, user.user_id, check_date, check_time, sistolik, distolik]
     );
 
-    return h.response({error: false, message: 'success', user }).code(201);
+    return h.response({error: false, message: 'success', data: {check_date: check_date, check_time: check_time, sistolik: sistolik, distolik: distolik} }).code(201);
 }
 
 async function getAllBloodPressure(request, h){
