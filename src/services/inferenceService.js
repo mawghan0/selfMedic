@@ -4,10 +4,11 @@ const InputError = require("../exceptions/InputError");
 async function scarClassification(model, image) {
     try {
         const tensor = tf.node
-            .decodeJpeg(image)
+            .decodeImage(image)
             .resizeNearestNeighbor([224, 224])
             .expandDims()
-            .toFloat();
+            .toFloat()
+            .div(tf.scalar(255.0));
 
         const prediction = model.predict(tensor);
         const score = await prediction.data();
