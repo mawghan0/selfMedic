@@ -8,6 +8,7 @@ const {
   postSugarBlood,
   getAllSugarBlood,
   skinDetection,
+  acneDetection,
   getProfile,
   postBloodPressure,
   getAllBloodPressure
@@ -85,6 +86,18 @@ const routes = [
         }
       },
       handler: skinDetection,
+    },
+    {
+      path: '/acne-detection',
+      method: 'POST',
+      options: {
+        auth: false,
+        payload: {
+          allow: 'multipart/form-data',
+          multipart: true,
+        }
+      },
+      handler: acneDetection,
     },
     //route profile
     {

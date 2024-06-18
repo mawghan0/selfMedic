@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../server/db');
 // const { image } = require("@tensorflow/tfjs-node");
-const scarClassification = require('../services/inferenceService')
+const {scarClassification, acneClassification} = require('../services/inferenceService')
 // const loadModel = require("../services/loadModel");
 
 const skinDiseases = {
@@ -135,6 +135,54 @@ async function skinDetection(request, h){
     }).code(200);
 }
 
+// async function acneDetection(request, h){
+//     const { image } = request.payload;
+//     const { acne_model } = request.server.app;
+
+//     // const { label, suggestion } = await scarClassification(model, image);
+//     const result = await acneClassification(acne_model, image);
+// console.log(result);
+
+//     // const disease = Object.keys(skinDiseases);
+//     return h.response({
+//         error: false,
+//         // result: disease[result]
+//         result: result
+//     }).code(200);
+// }
+
+async function acneDetection(request, h){
+    try {
+        const { image } = request.payload;
+        const { acne_model } = request.server.app;
+
+        const result = await acneClassification(acne_model, image);
+
+        // Assuming you have a mapping of class indices to disease names
+        const skinDiseases = [
+            'BA-cellulitis', 
+            'BA-impetigo', 
+            'FU-athlete-foot', 
+            'FU-nail-fungus', 
+            'FU-ringworm'
+        ];
+
+        const disease = skinDiseases[result.maxKey];
+
+        return h.response({
+            error: false,
+            result: disease,
+            confidence: result.maxValue // Optionally include the confidence score
+        }).code(200);
+    } catch (error) {
+        console.error("Error in acneDetection handler:", error);
+        return h.response({
+            status: "fail",
+            message: error.message
+        }).code(500);
+    }
+}
+
 async function postSugarBlood(request, h){
     const {check_date, check_time, blood_sugar} = request.payload;
 
@@ -231,6 +279,7 @@ module.exports = {
     getAllSugarBlood,
     getDiseaseDetail,
     skinDetection,
+    acneDetection,
     getProfile,
     postBloodPressure,
     getAllBloodPressure

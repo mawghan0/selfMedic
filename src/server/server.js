@@ -3,7 +3,7 @@ require('dotenv').config();
 const Hapi = require('@hapi/hapi');
 const routes = require('../server/routes');
 const Jwt = require('@hapi/jwt');
-const loadModel = require("../services/loadModel");
+const {loadModel, loadGModel} = require("../services/loadModel");
 const InputError = require("../exceptions/InputError");
 
 (async () => {
@@ -40,8 +40,13 @@ const InputError = require("../exceptions/InputError");
 
     server.auth.default('jwt');
 
+    // skinModel
     const model = await loadModel("https://storage.googleapis.com/capstone-self-medic/model/model.json");
     server.app.skin_model = model;
+
+    // acneModel
+    const acneModel = await loadGModel("file://acneModel/model.json");
+    server.app.acne_model = acneModel;
 
 
     server.route(routes);
