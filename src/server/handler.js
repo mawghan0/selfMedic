@@ -159,20 +159,15 @@ async function acneDetection(request, h){
         const result = await acneClassification(acne_model, image);
 
         // Assuming you have a mapping of class indices to disease names
-        const skinDiseases = [
-            'BA-cellulitis', 
-            'BA-impetigo', 
-            'FU-athlete-foot', 
-            'FU-nail-fungus', 
-            'FU-ringworm'
+        const acneDiseases = [
+            'Acne', 'Actinic Keratosis', 'Basal Cell Carcinoma', 'Eczemaa', 'Rosacea'
         ];
 
-        const disease = skinDiseases[result.maxKey];
+        const disease = acneDiseases[result.maxKey];
 
         return h.response({
             error: false,
             result: disease,
-            confidence: result.maxValue // Optionally include the confidence score
         }).code(200);
     } catch (error) {
         console.error("Error in acneDetection handler:", error);
