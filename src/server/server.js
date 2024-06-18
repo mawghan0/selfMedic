@@ -45,8 +45,14 @@ const InputError = require("../exceptions/InputError");
     server.app.skin_model = model;
 
     // acneModel
-    const acneModel = await loadGModel("file://acneModel/model.json");
-    server.app.acne_model = acneModel;
+    try {
+        const acneModelUrl = "https://storage.googleapis.com/capstone-self-medic/acneModel/model.json";
+        const acneModel = await loadGModel(acneModelUrl);
+        server.app.acne_model = acneModel;
+    } catch (error) {
+        console.error("Error loading model:", error);
+        process.exit(1);
+    }
 
 
     server.route(routes);
