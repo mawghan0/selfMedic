@@ -88,7 +88,7 @@ async function getAllDiseases(request, h){
     const [disease] = await pool.execute('SELECT * FROM diseases');
 
     const simplifiedDiseases = disease.map(disease => ({
-        id: disease.id,
+        id: disease.Id,
         name: disease.name,
         prevention: disease.prevention,
         treatment: disease.treatment,
