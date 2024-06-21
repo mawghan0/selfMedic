@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const pool = require('../server/db');
 // const { image } = require("@tensorflow/tfjs-node");
 const {scarClassification, acneClassification} = require('../services/inferenceService')
+const uploadFileToGCS = require('./storage.js');
 // const loadModel = require("../services/loadModel");
 
 const skinDiseases = {
@@ -34,7 +35,7 @@ async function postUserHandler(request, h) {
         return h.response({ error: 'Invalid password', hash: user.password, password: password }).code(401);
     }
 
-    const token = jwt.sign({ user_id: user.user_id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ user_id: user.user_id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
     return h.response({error: false, message: 'Login successful', loginResult: {
         userId: user.user_id,
@@ -124,32 +125,47 @@ async function getDiseaseDetail(request, h){
 async function skinDetection(request, h){
     const { image } = request.payload;
     const { skin_model } = request.server.app;
+    const imageName = `image_${Date.now()}.png`;
+    const id = "SD" + crypto.randomUUID();
+    const user = request.auth.credentials.user;
 
+    const link = await uploadFileToGCS(image, imageName);
     // const { label, suggestion } = await scarClassification(model, image);
     const result = await scarClassification(skin_model, image)
 
     const disease = Object.keys(skinDiseases);
+    
+    await pool.execute(
+        'INSERT INTO historyskin (id, user_id, image, result) VALUES (?, ?, ?, ?)', 
+        [id, user.user_id, link, disease[result]]
+    );
+
+
     return h.response({
         error: false,
-        result: disease[result]
+        result: disease[result],
+        // link: link
     }).code(200);
 }
 
-// async function acneDetection(request, h){
-//     const { image } = request.payload;
-//     const { acne_model } = request.server.app;
+async function getAllSkinDetection(request, h){
+        const user = request.auth.credentials.user;
+        const [historySD] = await pool.execute('SELECT * FROM historyskin WHERE user_id = ?', [user.user_id]);
+        const historySkinDetection = historySD.map(note => ({
+            id: note.id,
+            image: note.image,
+            result: note.result,
+            createdAt: note.createdAt,
+          }));
+    
+        return h.response({
+            error: false,
+            status: "Success",
+            data: historySkinDetection
+            // user: user,
+        });
+}
 
-//     // const { label, suggestion } = await scarClassification(model, image);
-//     const result = await acneClassification(acne_model, image);
-// console.log(result);
-
-//     // const disease = Object.keys(skinDiseases);
-//     return h.response({
-//         error: false,
-//         // result: disease[result]
-//         result: result
-//     }).code(200);
-// }
 
 async function acneDetection(request, h){
     try {
@@ -277,5 +293,6 @@ module.exports = {
     acneDetection,
     getProfile,
     postBloodPressure,
-    getAllBloodPressure
+    getAllBloodPressure,
+    getAllSkinDetection
 }

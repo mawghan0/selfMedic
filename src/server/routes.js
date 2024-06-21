@@ -11,7 +11,8 @@ const {
   acneDetection,
   getProfile,
   postBloodPressure,
-  getAllBloodPressure
+  getAllBloodPressure,
+  getAllSkinDetection
 } = require('./handler');
 
 const routes = [
@@ -79,7 +80,7 @@ const routes = [
       path: '/skin-detection',
       method: 'POST',
       options: {
-        auth: false,
+        auth: 'jwt',
         payload: {
           allow: 'multipart/form-data',
           multipart: true,
@@ -88,10 +89,18 @@ const routes = [
       handler: skinDetection,
     },
     {
+      path: '/skin-detection',
+      method: 'GET',
+      options: {
+        auth: 'jwt',
+      },
+      handler: getAllSkinDetection,
+    },
+    {
       path: '/acne-detection',
       method: 'POST',
       options: {
-        auth: false,
+        auth: 'jwt',
         payload: {
           allow: 'multipart/form-data',
           multipart: true,

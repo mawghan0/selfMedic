@@ -27,7 +27,7 @@ const InputError = require("../exceptions/InputError");
             sub: false, 
             nbf: true,
             exp: true,
-            maxAgeSec: 14400, 
+            maxAgeSec: 604800, 
             timeSkewSec: 15
         },
         validate: (artifacts, request, h) => {
@@ -51,7 +51,7 @@ const InputError = require("../exceptions/InputError");
         server.app.acne_model = acneModel;
     } catch (error) {
         console.error("Error loading model:", error);
-        process.exit(1);
+        // process.exit(1);
     }
 
 
