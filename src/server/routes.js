@@ -12,7 +12,8 @@ const {
   getProfile,
   postBloodPressure,
   getAllBloodPressure,
-  getAllSkinDetection
+  getAllSkinDetection,
+  getAllAcneDetection
 } = require('./handler');
 
 const routes = [
@@ -107,6 +108,14 @@ const routes = [
         }
       },
       handler: acneDetection,
+    },
+    {
+      path: '/acne-detection',
+      method: 'GET',
+      options: {
+        auth: 'jwt',
+      },
+      handler: getAllAcneDetection,
     },
     //route profile
     {

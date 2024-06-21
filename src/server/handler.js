@@ -171,6 +171,11 @@ async function acneDetection(request, h){
     try {
         const { image } = request.payload;
         const { acne_model } = request.server.app;
+        const imageName = `image_${Date.now()}.png`;
+        const id = "SD" + crypto.randomUUID();
+        const user = request.auth.credentials.user;
+
+        const link = await uploadFileToGCS(image, imageName);
 
         const result = await acneClassification(acne_model, image);
 
@@ -180,6 +185,11 @@ async function acneDetection(request, h){
         ];
 
         const disease = acneDiseases[result.maxKey];
+
+        await pool.execute(
+            'INSERT INTO historyacne (id, user_id, image, result) VALUES (?, ?, ?, ?)', 
+            [id, user.user_id, link, disease]
+        );
 
         return h.response({
             error: false,
@@ -192,6 +202,24 @@ async function acneDetection(request, h){
             message: error.message
         }).code(500);
     }
+}
+
+async function getAllAcneDetection(request, h){
+    const user = request.auth.credentials.user;
+    const [historyAD] = await pool.execute('SELECT * FROM historyacne WHERE user_id = ?', [user.user_id]);
+    const historyAcneDetection = historyAD.map(note => ({
+        id: note.id,
+        image: note.image,
+        result: note.result,
+        createdAt: note.createdAt,
+      }));
+
+    return h.response({
+        error: false,
+        status: "Success",
+        data: historyAcneDetection
+        // user: user,
+    });
 }
 
 async function postSugarBlood(request, h){
@@ -294,5 +322,6 @@ module.exports = {
     getProfile,
     postBloodPressure,
     getAllBloodPressure,
-    getAllSkinDetection
+    getAllSkinDetection,
+    getAllAcneDetection
 }
